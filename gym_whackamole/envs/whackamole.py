@@ -287,10 +287,10 @@ class WhackAMole(gym.Env):
             )
 
         now_gaze = self.observation_space["gaze"].obs()
-        if now_gaze["ishit"] == -1:
+        if now_mole["ishit"] == -1:
             width_gaze = 0
             col_gaze = (255, 0, 0)
-        elif now_gaze["ishit"] == 1:
+        elif now_mole["ishit"] == 1:
             width_gaze = 3
             col_gaze = (0, 255, 0)
         else:
