@@ -201,7 +201,8 @@ class WhackAMole(gym.Env):
         #     }
         # )
         self.action_space = spaces.Discrete(7)
-        self.observation_space = spaces.Dict(
+        self.observation_space = spaces.Discrete(10)
+        self.my_observation_space = spaces.Dict(
             {
                 "mole": Mole(low = np.array([0, self.window_size[0]]),
                              high = np.array([0, self.window_size[1]]),
@@ -248,8 +249,8 @@ class WhackAMole(gym.Env):
 
     def step(self, action):
         action = self.action_transform(action)
-        r1 = self.observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
-        r2 = self.observation_space["mole"].step(self.observation_space["gaze"].obs(), action["hit"])
+        r1 = self.my_observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
+        r2 = self.my_observation_space["mole"].step(self.my_observation_space["gaze"].obs(), action["hit"])
         self.reward = self.reward + r1 + r2
         obs = self._get_obs()
         info = self._get_info()
@@ -273,8 +274,8 @@ class WhackAMole(gym.Env):
         super().seed(seed)
         self.frame_count = 0;
         self.reward = 0
-        self.observation_space["mole"].reset()
-        self.observation_space["gaze"].reset()
+        self.my_observation_space["mole"].reset()
+        self.my_observation_space["gaze"].reset()
         obs = self._get_obs()
         info = self._get_info()
         # clean the render collection and add the initial frame
@@ -282,8 +283,15 @@ class WhackAMole(gym.Env):
         self.renderer.render_step()
         return obs, info if return_info else obs
 
+    def obs2vec(self, obs):
+        mole = obs["mole"]
+        gaze = obs["gaze"]
+        return np.concatenate(mole["xy"], mole["radius"], mole["invisible"],mole["ishit"],
+            gaze["xy"], gaze["radius"], gaze["v_step"], gaze["v_phi"])
+
     def _get_obs(self):
-        return {"mole": self.observation_space['mole'].obs(), "gaze": self.observation_space['gaze'].obs()}
+        obs =  {"mole": self.my_observation_space['mole'].obs(), "gaze": self.my_observation_space['gaze'].obs()}
+        return self.obs2vec(obs)
 
     def _get_info(self):
         return {'reward': self.reward}
@@ -301,7 +309,7 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
-        now_mole = self.observation_space["mole"].obs()
+        now_mole = self.my_observation_space["mole"].obs()
         if now_mole["isvisible"] == 1:
             pygame.draw.circle(
                 canvas,
@@ -310,7 +318,7 @@ class WhackAMole(gym.Env):
                 now_mole["radius"],
             )
 
-        now_gaze = self.observation_space["gaze"].obs()
+        now_gaze = self.my_observation_space["gaze"].obs()
         if now_mole["ishit"] == -1:
             width_gaze = 0
             col_gaze = (255, 0, 0)
