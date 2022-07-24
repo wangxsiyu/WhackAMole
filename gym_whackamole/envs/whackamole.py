@@ -172,6 +172,7 @@ class WhackAMole(gym.Env):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
+        self.pixel_size = self.window_size[0]/100
         self.total_num_of_frames = 1000
         self.action_space = spaces.Dict(
             {
@@ -257,9 +258,7 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
-        pix_square_size = (
-            self.window_size / self.size
-        )  # The size of a single grid square in pixels
+        pix_square_size = self.pixel_size # The size of a single grid square in pixels
 
         # First we draw the target
         # pygame.draw.rect(
