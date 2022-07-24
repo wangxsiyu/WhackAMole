@@ -10,7 +10,7 @@ class Mole(spaces.Box):
         super().__init__(low = low, high = high, shape = shape)
         self.window_size = window_size
         self.is_visible = 0
-        self.p_popping = 0.1
+        self.p_popping = 0.2
         self.max_life = 5
         self.radius = 10
         self.reward_hit = 100
@@ -35,6 +35,7 @@ class Mole(spaces.Box):
         return did_i_die
 
     def step(self, gaze, action_hit): 
+        self.am_I_hit = 0
         if self._mole_life > 0:
             self._mole_life -= 1
             if self._mole_life == 0:
@@ -44,8 +45,10 @@ class Mole(spaces.Box):
 
         if action_hit == 1:
             if self.is_mole_in_gaze(gaze):
+                self.am_I_hit = 1
                 reward = self.reward_hit
             else:
+                self.am_I_hit = -1
                 reward = self.reward_miss
         else:
             reward = 0
@@ -69,11 +72,12 @@ class Mole(spaces.Box):
         self._mole_location = np.array([x,y])
 
     def reset(self):
+        self.am_I_hit = 0
         self._mole_life = 0
         self.die()
 
     def obs(self):
-        return {"xy": self._mole_location * self.is_visible, "radius": self.radius, "isvisible": self.is_visible}
+        return {"xy": self._mole_location * self.is_visible, "radius": self.radius, "isvisible": self.is_visible, "ishit": self.am_I_hit}
 
 class Gaze(spaces.Box):
     def __init__(self, low, high, shape, window_size):
@@ -273,9 +277,6 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
-
-        pygame.display.set_caption(f"Reward = {self.reward}")
-
         now_mole = self.observation_space["mole"].obs()
         if now_mole["isvisible"] == 1:
             pygame.draw.circle(
@@ -286,12 +287,22 @@ class WhackAMole(gym.Env):
             )
 
         now_gaze = self.observation_space["gaze"].obs()
+        if now_gaze["ishit"] == -1:
+            width_gaze = 0
+            col_gaze = (255, 0, 0)
+        elif now_gaze["ishit"] == 1:
+            width_gaze = 3
+            col_gaze = (0, 255, 0)
+        else:
+            width_gaze = 1
+            col_gaze = (255, 0, 0)
+
         pygame.draw.circle(
                 canvas,
-                (255, 0, 0),
+                col_gaze,
                 now_gaze["xy"],
                 now_gaze["radius"],
-                width = 1
+                width = width_gaze
             )
 
         if mode == "human":
