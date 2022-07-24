@@ -252,8 +252,6 @@ class WhackAMole(gym.Env):
         r1 = self.my_observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
         r2 = self.my_observation_space["mole"].step(self.my_observation_space["gaze"].obs(), action["hit"])
         self.reward = self.reward + r1 + r2
-        obs = self._get_obs()
-        info = self._get_info()
 
         self.frame_count -= 1
         if self.frame_count == 0:
@@ -264,6 +262,8 @@ class WhackAMole(gym.Env):
         # add a frame to the render collection
         self.renderer.render_step()
 
+        obs = self._get_obs()
+        info = self._get_info()
         return obs, self.reward, done, info
 
     def render(self):
@@ -271,23 +271,24 @@ class WhackAMole(gym.Env):
         return self.renderer.get_renders()
 
     def reset(self, seed = None, return_info = False):
-        super().seed(seed)
+        super().reset(seed = seed)
         self.frame_count = 0;
         self.reward = 0
         self.my_observation_space["mole"].reset()
         self.my_observation_space["gaze"].reset()
-        obs = self._get_obs()
-        info = self._get_info()
         # clean the render collection and add the initial frame
         self.renderer.reset()
         self.renderer.render_step()
-        return obs, info if return_info else obs
+
+        obs = self._get_obs()
+        info = self._get_info()
+        return obs if not return_info else (obs, info)
 
     def obs2vec(self, obs):
         mole = obs["mole"]
         gaze = obs["gaze"]
-        return np.concatenate(mole["xy"], mole["radius"], mole["invisible"],mole["ishit"],
-            gaze["xy"], gaze["radius"], gaze["v_step"], gaze["v_phi"])
+        obs = [mole["xy"], mole["radius"], mole["isvisible"],mole["ishit"], gaze["xy"], gaze["radius"], gaze["v_step"], gaze["v_phi"]]
+        return np.hstack(obs)
 
     def _get_obs(self):
         obs =  {"mole": self.my_observation_space['mole'].obs(), "gaze": self.my_observation_space['gaze'].obs()}
