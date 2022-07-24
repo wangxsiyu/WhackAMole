@@ -273,7 +273,7 @@ class WhackAMole(gym.Env):
         pygame.draw.circle(
             canvas,
             (0, 0, 255),
-            10,
+            (10, 40),
             20,
         )
 
