@@ -193,13 +193,14 @@ class WhackAMole(gym.Env):
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
         self.total_num_of_frames = 1000
-        self.action_space = spaces.Dict(
-            {
-                "gaze_dir": spaces.Discrete(4),
-                "gaze_step": spaces.Discrete(3),
-                "hit": spaces.Discrete(2)
-            }
-        )
+        # self.action_space = spaces.Dict(
+        #     {
+        #         "gaze_dir": spaces.Discrete(4),
+        #         "gaze_step": spaces.Discrete(3),
+        #         "hit": spaces.Discrete(2)
+        #     }
+        # )
+        self.action_space = spaces.Discrete(7)
         self.observation_space = spaces.Dict(
             {
                 "mole": Mole(low = np.array([0, self.window_size[0]]),
@@ -223,7 +224,30 @@ class WhackAMole(gym.Env):
             self.clock = None
         self.renderer = Renderer(self.render_mode, self._render_frame)
 
+    def action_transform(self, action):
+        a = spaces.Dict(
+            {
+                "gaze_dir": spaces.Discrete(4),
+                "gaze_step": spaces.Discrete(3),
+                "hit": spaces.Discrete(2)
+            }
+        )
+        if action == 1:
+            a["hit"] = 1
+        else:
+            a["hit"] = 0
+        if action >= 2 and action <= 3:
+            a["gaze_step"] = action - 1
+        else:
+            a["gaze_step"] = 0
+        if action >= 4 and action <= 6:
+            a["gaze_dir"] = action - 3
+        else:
+            a["gaze_dir"] = 0
+        return(a)
+
     def step(self, action):
+        action = self.action_transform(action)
         r1 = self.observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
         r2 = self.observation_space["mole"].step(self.observation_space["gaze"].obs(), action["hit"])
         self.reward = self.reward + r1 + r2
