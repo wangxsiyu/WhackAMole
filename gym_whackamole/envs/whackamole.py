@@ -258,7 +258,7 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
-        pix_square_size = self.pixel_size # The size of a single grid square in pixels
+        # pix_square_size = self.pixel_size # The size of a single grid square in pixels
 
         # First we draw the target
         # pygame.draw.rect(
