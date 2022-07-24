@@ -18,8 +18,15 @@ class Mole(spaces.Box):
         self.reset()
 
     def collide(self, mole, gaze):
-        print(mole, gaze)
-        return True
+        xy_mole = mole["xy"]
+        r_mole = mole["radius"]
+        xy_gaze = mole["xy"]
+        r_gaze = mole["radius"]
+        dis = np.sqrt(np.sum((xy_gaze - xy_mole) ** 2))
+        if dis < np.abs(r_gaze - r_mole):
+            return True
+        else:
+            return False
 
     def is_mole_in_gaze(self, gaze):
         did_i_die = self.collide(self.obs(),gaze)
@@ -150,11 +157,20 @@ class Gaze(spaces.Box):
         t = np.random.random(size = 2) * self.window_size
         return t[0], t[1]
 
+    def is_valid_xy(self, x, y):
+        if x > 0 and x < self.window_size[0] and y > 0 and y < self.window_size[1]:
+            return True
+        else:
+            return False
+
     def set_pos(self, x, y):
         x = float(x)
         y = float(y)
-        self._gaze_location = np.array([x,y])
-        self.calculate_phi()
+        if self.is_valid_xy(x,y):
+            self._gaze_location = np.array([x,y])
+            self.calculate_phi()
+        else: 
+            self.reset()
 
     def reset(self):
         tx, ty = self.sample_pos()
@@ -242,7 +258,7 @@ class WhackAMole(gym.Env):
         return {"mole": self.observation_space['mole'].obs(), "gaze": self.observation_space['gaze'].obs()}
 
     def _get_info(self):
-        return {'info': None}
+        return {'reward': self.reward}
 
     def close(self):
         if self.window is not None:
@@ -257,6 +273,8 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
+
+        pygame.display.set_caption(f"Reward = {self.reward}")
 
         now_mole = self.observation_space["mole"].obs()
         if now_mole["isvisible"] == 1:
@@ -275,7 +293,7 @@ class WhackAMole(gym.Env):
                 now_gaze["radius"],
                 width = 1
             )
-            
+
         if mode == "human":
             assert self.window is not None
             # The following line copies our drawings from `canvas` to the visible window
