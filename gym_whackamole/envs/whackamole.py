@@ -1,3 +1,10 @@
+import gym
+from gym import spaces
+import math
+import numpy as np
+from gym.utils.renderer import Renderer
+import pygame
+
 class Mole(spaces.Box):
     def __init__(self, low, high, shape, window_size):
         super().__init__(low = low, high = high, shape = shape)
