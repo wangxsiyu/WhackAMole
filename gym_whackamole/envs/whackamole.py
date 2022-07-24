@@ -12,7 +12,7 @@ class Mole(spaces.Box):
         self.is_visible = 0
         self.p_popping = 0.1
         self.max_life = 5
-        self.radius = 1
+        self.radius = 10
         self.reward_hit = 100
         self.reward_miss = -10
         self.reset()
@@ -66,13 +66,13 @@ class Mole(spaces.Box):
         self.die()
 
     def obs(self):
-        return {"xy": self._mole_location * self.is_visible, "radius": self.radius}
+        return {"xy": self._mole_location * self.is_visible, "radius": self.radius, "isvisible": self.is_visible}
 
 class Gaze(spaces.Box):
     def __init__(self, low, high, shape, window_size):
         super().__init__(low = low, high = high, shape = shape)
         self.window_size = window_size
-        self.radius = 5
+        self.radius = 50
         self.alpha_gaze = 2
         self.alpha_dir = 2
         self.cost_action_step = -2
@@ -172,7 +172,6 @@ class WhackAMole(gym.Env):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
-        self.pixel_size = self.window_size[0]/100
         self.total_num_of_frames = 1000
         self.action_space = spaces.Dict(
             {
@@ -258,25 +257,25 @@ class WhackAMole(gym.Env):
     
         canvas = pygame.Surface(self.window_size)
         canvas.fill((255, 255, 255))
-        # pix_square_size = self.pixel_size # The size of a single grid square in pixels
 
-        # First we draw the target
-        # pygame.draw.rect(
-        #     canvas,
-        #     (255, 0, 0),
-        #     pygame.Rect(
-        #         pix_square_size * self._target_location,
-        #         (pix_square_size, pix_square_size),
-        #     ),
-        # )
-        # Now we draw the agent
+        now_mole = self.observation_space["mole"].obs()
+        if now_mole["isvisible"] == 1:
+            pygame.draw.circle(
+                canvas,
+                (0, 255, 0),
+                now_mole["xy"],
+                now_mole["radius"],
+            )
+
+        now_gaze = self.observation_space["gaze"].obs()
         pygame.draw.circle(
-            canvas,
-            (0, 0, 255),
-            (10, 40),
-            20,
-        )
-
+                canvas,
+                (255, 0, 0),
+                now_gaze["xy"],
+                now_gaze["radius"],
+                width = 1
+            )
+            
         if mode == "human":
             assert self.window is not None
             # The following line copies our drawings from `canvas` to the visible window
