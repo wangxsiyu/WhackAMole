@@ -357,8 +357,8 @@ class WhackAMole(gym.Env):
                 width = width_gaze
             )
 
-        font1 = pygame.font.SysFont(None, 72)
-        canvas_text = font1.render(f"Reward = {self.reward}", True, BLUE)
+        font1 = pygame.font.SysFont("Garamond", 72)
+        canvas_text = font1.render(f"Reward = {self.reward}", True, (0,0,255))
         if mode == "human":
             assert self.window is not None
             # The following line copies our drawings from `canvas` to the visible window
