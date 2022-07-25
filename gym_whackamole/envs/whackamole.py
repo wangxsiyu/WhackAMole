@@ -56,7 +56,10 @@ class Mole(spaces.Box):
         return reward
 
     def pop(self):
-        self._mole_life = self.max_life
+        if self.mode_mole == "maxlife":
+            self._mole_life = self.max_life * 10
+        else:
+            self._mole_life = self.max_life
         self.is_visible = 1
         tx, ty = self.sample_pos()
         self.set_pos(tx, ty)
