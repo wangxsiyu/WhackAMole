@@ -30,23 +30,20 @@ class Mole(spaces.Box):
         else:
             return False
 
-    def is_mole_in_gaze(self, gaze):
-        did_i_die = self.collide(self.obs(),gaze)
-        if did_i_die:
-            self.die()
-        return did_i_die
-
     def step(self, gaze, action_hit): 
-        self.am_I_hit = 0
-        if self._mole_life > 0:
-            self._mole_life -= 1
-            if self._mole_life == 0:
-                self.die()
-        elif np.random.random() < self.p_popping:
-            self.pop()
+        if self.am_I_hit == 1:
+            self.die()
+        else:
+            if self._mole_life > 0:
+                self._mole_life -= 1
+                if self._mole_life == 0:
+                    self.die()
+            elif np.random.random() < self.p_popping:
+                self.pop()
 
+        self.am_I_hit = 0
         if action_hit == 1:
-            if self.is_mole_in_gaze(gaze):
+            if self.is_visible == 1 and self.collide(self.obs(),gaze):
                 self.am_I_hit = 1
                 reward = self.reward_hit
             else:
@@ -91,10 +88,12 @@ class Gaze(spaces.Box):
         self.radius = 50
         self.alpha_gaze = 2
         self.alpha_dir = 2
-        self.cost_action_step = 0
-        self.cost_action_dir = 0
         self._gaze_velosity_initial = 1.0
         self._gaze_velosity_phi_initial = math.pi/30
+        self.cost_action_step = 0
+        self.cost_action_dir = 0
+        self.punish_de_velosity_at_0 = -2
+        self.punish_de_phi_at_0 = -1
         self.reset()
 
     def step(self, action_step, action_dir):
@@ -117,6 +116,8 @@ class Gaze(spaces.Box):
             else:
                 self._gaze_velosity = self._gaze_velosity * self.alpha_gaze
         elif action_step == 2: # decelarate
+            if self._gaze_velosity == 0:
+                reward += self.punish_de_velosity_at_0
             self._gaze_velosity = self._gaze_velosity / self.alpha_gaze
             if self._gaze_velosity < self._gaze_velosity_initial:
                 self._gaze_velosity = 0
@@ -135,10 +136,14 @@ class Gaze(spaces.Box):
             else:
                 self._phi_velosity = self._phi_velosity * self.alpha_dir
         elif action_dir == 2: # decelarate
+            if self._phi_velosity == 0:
+                reward += self.punish_de_phi_at_0
             self._phi_velosity = self._phi_velosity / self.alpha_dir
             if np.abs(self._phi_velosity) < self._gaze_velosity_phi_initial:
                 self._phi_velosity = 0
         elif action_dir == 3: # change direction
+            if self._phi_velosity == 0:
+                reward += self.punish_de_phi_at_0
             if self._phi_velosity > 0:
                 self._phi_velosity = -self._gaze_velosity_phi_initial
             elif self._phi_velosity < 0:
@@ -192,12 +197,12 @@ class Gaze(spaces.Box):
                 "v_step": self._gaze_velosity, "v_phi": self._phi_velosity}
 
 class WhackAMole(gym.Env):
-    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
+    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 5}
     def __init__(self, render_mode = None, mode_mole = None):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
-        self.total_num_of_frames = 1000
+        self.total_num_of_frames = 100
         # self.action_space = spaces.Dict(
         #     {
         #         "gaze_dir": spaces.Discrete(4),
@@ -329,7 +334,7 @@ class WhackAMole(gym.Env):
                     canvas,
                     (0, 0, 255),
                     now_mole["xy"],
-                    now_mole["radius"]*10,
+                    now_mole["radius"]*2,
                 )
             else:
                 pygame.draw.circle(
