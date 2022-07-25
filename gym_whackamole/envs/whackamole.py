@@ -24,7 +24,8 @@ class Mole(spaces.Box):
         xy_gaze = gaze["xy"]
         r_gaze = gaze["radius"]
         dis = np.sqrt(np.sum((xy_gaze - xy_mole) ** 2))
-        if dis < np.abs(r_gaze - r_mole):
+        if dis < np.abs(r_gaze + r_mole): # as long as it touches
+            print("hit")
             return True
         else:
             return False
@@ -328,7 +329,7 @@ class WhackAMole(gym.Env):
                     canvas,
                     (0, 0, 255),
                     now_mole["xy"],
-                    now_mole["radius"],
+                    now_mole["radius"]*10,
                 )
             else:
                 pygame.draw.circle(
