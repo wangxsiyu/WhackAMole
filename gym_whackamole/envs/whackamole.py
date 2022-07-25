@@ -201,7 +201,12 @@ class WhackAMole(gym.Env):
         #     }
         # )
         self.action_space = spaces.Discrete(7)
-        self.observation_space = spaces.Discrete(10)
+        vMAX = 99999.0
+        low = np.array([0,0,0,0,0,0,0,0,-vMAX,-vMAX]).astype(np.float32)
+        high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
+            self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX]).astype(np.float32)
+        self.observation_space = spaces.Box(low, high)
+
         self.my_observation_space = spaces.Dict(
             {
                 "mole": Mole(low = np.array([0, self.window_size[0]]),
