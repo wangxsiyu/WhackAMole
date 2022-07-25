@@ -227,6 +227,7 @@ class WhackAMole(gym.Env):
         if self.render_mode == "human":
             import pygame  # import here to avoid pygame dependency with no render
             pygame.init()
+            pygame.font.init()
             pygame.display.init()
             self.window = pygame.display.set_mode(self.window_size)
             self.clock = pygame.time.Clock()
