@@ -322,20 +322,28 @@ class WhackAMole(gym.Env):
         canvas.fill((255, 255, 255))
         now_mole = self.my_observation_space["mole"].obs()
         if now_mole["isvisible"] == 1:
-            pygame.draw.circle(
-                canvas,
-                (0, 255, 0),
-                now_mole["xy"],
-                now_mole["radius"],
-            )
+            if now_mole["ishit"] == 1:
+                pygame.draw.circle(
+                    canvas,
+                    (0, 0, 255),
+                    now_mole["xy"],
+                    now_mole["radius"],
+                )
+            else:
+                pygame.draw.circle(
+                    canvas,
+                    (0, 255, 0),
+                    now_mole["xy"],
+                    now_mole["radius"],
+                )
 
         now_gaze = self.my_observation_space["gaze"].obs()
         if now_mole["ishit"] == -1:
             width_gaze = 0
             col_gaze = (255, 0, 0)
         elif now_mole["ishit"] == 1:
-            width_gaze = 0
-            col_gaze = (0, 255, 0)
+            width_gaze = 5
+            col_gaze = (255, 0, 0)
         else:
             width_gaze = 1
             col_gaze = (255, 0, 0)
@@ -348,10 +356,13 @@ class WhackAMole(gym.Env):
                 width = width_gaze
             )
 
+        font1 = pygame.font.SysFont('chalkduster.ttf', 72)
+        canvas_text = font1.render(f"Reward = {self.reward}", True, RED)
         if mode == "human":
             assert self.window is not None
             # The following line copies our drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
+            self.window.blit(canvas_text, (0,0))
             pygame.event.pump()
             pygame.display.update()
 
