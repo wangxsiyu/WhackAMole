@@ -268,7 +268,8 @@ class WhackAMole(gym.Env):
         action = self.action_transform(action)
         r1 = self.my_observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
         r2 = self.my_observation_space["mole"].step(self.my_observation_space["gaze"].obs(), action["hit"])
-        self.reward = self.reward + r1 + r2
+        reward = r1 + r2
+        self.reward = self.reward + reward
 
         self.frame_count += 1
         if self.frame_count <= self.total_num_of_frames:
@@ -281,7 +282,7 @@ class WhackAMole(gym.Env):
 
         obs = self._get_obs()
         info = self._get_info()
-        return obs, self.reward, done, info
+        return obs, reward, done, info
 
     def render(self):
         # Just return the list of render frames collected by the Renderer.
@@ -312,7 +313,7 @@ class WhackAMole(gym.Env):
         return self.obs2vec(obs)
 
     def _get_info(self):
-        return {'reward': self.reward}
+        return {'total-reward': self.reward}
 
     def close(self):
         if self.window is not None:
