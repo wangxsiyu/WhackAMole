@@ -89,12 +89,16 @@ class Gaze(spaces.Box):
         self.alpha_gaze = 2
         self.alpha_dir = 2
         self._gaze_velosity_initial = 1.0
+        self._gaze_velosity_MAX = 30.0
         self._gaze_velosity_phi_initial = math.pi/30
+        self._gaze_velosity_phi_MAX = math.pi/3
         self.cost_action_step = 0
         self.cost_action_dir = 0
         self.punish_de_velosity_at_0 = -1
         self.punish_de_phi_at_0 = -1
-        self.punish_outofbox = -5
+        self.punish_ac_velosity_at_MAX = -1
+        self.punish_ac_phi_at_MAX = -1
+        self.punish_outofbox = 0
         self.reset()
 
     def step(self, action_step, action_dir):
@@ -112,16 +116,22 @@ class Gaze(spaces.Box):
             reward = self.cost_action_step
 
         if action_step == 1: # accelarate
-            if self._gaze_velosity == 0:
-                self._gaze_velosity = self._gaze_velosity_initial
+            if self._gaze_velosity >= self._gaze_velosity_MAX:
+                reward += self.punish_ac_velosity_at_MAX
             else:
-                self._gaze_velosity = self._gaze_velosity * self.alpha_gaze
+                if self._gaze_velosity == 0:
+                    self._gaze_velosity = self._gaze_velosity_initial
+                else:
+                    self._gaze_velosity = self._gaze_velosity * self.alpha_gaze
+                    if self._gaze_velosity > self._gaze_velosity_MAX:
+                        self._gaze_velosity = self._gaze_velosity_MAX
         elif action_step == 2: # decelarate
-            if self._gaze_velosity == 0:
-                reward += self.punish_de_velosity_at_0
-            self._gaze_velosity = self._gaze_velosity / self.alpha_gaze
             if self._gaze_velosity < self._gaze_velosity_initial:
-                self._gaze_velosity = 0
+                reward += self.punish_de_velosity_at_0
+            else:
+                self._gaze_velosity = self._gaze_velosity / self.alpha_gaze
+                if self._gaze_velosity < self._gaze_velosity_initial:
+                    self._gaze_velosity = 0
 
         return reward
 
@@ -132,23 +142,32 @@ class Gaze(spaces.Box):
             reward = self.cost_action_dir
 
         if action_dir == 1: # accelarate
-            if self._phi_velosity == 0:
-                self._phi_velosity = self._gaze_velosity_phi_initial * np.sign(np.random.random() - 0.5)
+            if np.abs(self._phi_velosity) >= self._gaze_velosity_phi_MAX:
+                reward += self.punish_ac_phi_at_MAX
             else:
-                self._phi_velosity = self._phi_velosity * self.alpha_dir
+                if self._phi_velosity == 0:
+                    self._phi_velosity = self._gaze_velosity_phi_initial * np.sign(np.random.random() - 0.5)
+                else:
+                    self._phi_velosity = self._phi_velosity * self.alpha_dir
+                    if self._phi_velosity > self._gaze_velosity_phi_MAX:
+                        self._phi_velosity = self._gaze_velosity_phi_MAX
+                    elif self._phi_velosity < -self._gaze_velosity_phi_MAX:
+                        self._phi_velosity = -self._gaze_velosity_phi_MAX
         elif action_dir == 2: # decelarate
             if self._phi_velosity == 0:
                 reward += self.punish_de_phi_at_0
-            self._phi_velosity = self._phi_velosity / self.alpha_dir
-            if np.abs(self._phi_velosity) < self._gaze_velosity_phi_initial:
-                self._phi_velosity = 0
+            else:
+                self._phi_velosity = self._phi_velosity / self.alpha_dir
+                if np.abs(self._phi_velosity) < self._gaze_velosity_phi_initial:
+                    self._phi_velosity = 0
         elif action_dir == 3: # change direction
             if self._phi_velosity == 0:
                 reward += self.punish_de_phi_at_0
-            if self._phi_velosity > 0:
-                self._phi_velosity = -self._gaze_velosity_phi_initial
-            elif self._phi_velosity < 0:
-                self._phi_velosity = self._gaze_velosity_phi_initial
+            else:
+                if self._phi_velosity > 0:
+                    self._phi_velosity = -self._gaze_velosity_phi_initial
+                elif self._phi_velosity < 0:
+                    self._phi_velosity = self._gaze_velosity_phi_initial
         return reward
 
     def move_gaze(self):
