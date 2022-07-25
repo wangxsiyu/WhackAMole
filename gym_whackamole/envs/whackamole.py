@@ -92,16 +92,17 @@ class Gaze(spaces.Box):
         self._gaze_velosity_phi_initial = math.pi/30
         self.cost_action_step = 0
         self.cost_action_dir = 0
-        self.punish_de_velosity_at_0 = -2
+        self.punish_de_velosity_at_0 = -1
         self.punish_de_phi_at_0 = -1
+        self.punish_outofbox = -5
         self.reset()
 
     def step(self, action_step, action_dir):
         self._gaze_location = self._gaze_location
         r1 = self.accelerate_step(action_step)
         r2 = self.accelerate_dir(action_dir)
-        self.move_gaze()
-        reward = r1 + r2
+        r3 = self.move_gaze()
+        reward = r1 + r2 + r3
         return reward
 
     def accelerate_step(self, action_step):
@@ -155,7 +156,8 @@ class Gaze(spaces.Box):
         x, y = self._gaze_location
         x += np.cos(phi) * self._gaze_velosity
         y += np.sin(phi) * self._gaze_velosity
-        self.set_pos(x, y)
+        reward = self.set_pos(x, y)
+        return reward
 
     def calculate_phi(self):
         x, y = self._gaze_location
@@ -183,8 +185,11 @@ class Gaze(spaces.Box):
         if self.is_valid_xy(x,y):
             self._gaze_location = np.array([x,y])
             self.calculate_phi()
+            reward = 0
         else: 
+            reward = self.punish_outofbox
             self.reset()
+        return reward
 
     def reset(self):
         tx, ty = self.sample_pos()
