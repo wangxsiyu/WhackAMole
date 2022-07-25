@@ -6,7 +6,7 @@ from gym.utils.renderer import Renderer
 import pygame
 
 class Mole(spaces.Box):
-    def __init__(self, low, high, shape, window_size):
+    def __init__(self, low, high, shape, window_size, mode = None):
         super().__init__(low = low, high = high, shape = shape)
         self.window_size = window_size
         self.is_visible = 0
@@ -15,6 +15,7 @@ class Mole(spaces.Box):
         self.radius = 10
         self.reward_hit = 100
         self.reward_miss = -10
+        self.mode_mole = mode
         self.reset()
 
     def collide(self, mole, gaze):
@@ -86,8 +87,8 @@ class Gaze(spaces.Box):
         self.radius = 50
         self.alpha_gaze = 2
         self.alpha_dir = 2
-        self.cost_action_step = -2
-        self.cost_action_dir = -1
+        self.cost_action_step = 0
+        self.cost_action_dir = 0
         self._gaze_velosity_initial = 1.0
         self._gaze_velosity_phi_initial = math.pi/30
         self.reset()
@@ -188,7 +189,7 @@ class Gaze(spaces.Box):
 
 class WhackAMole(gym.Env):
     metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
-    def __init__(self, render_mode = None):
+    def __init__(self, render_mode = None, mode_mole = None):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
@@ -212,7 +213,8 @@ class WhackAMole(gym.Env):
                 "mole": Mole(low = np.array([0, self.window_size[0]]),
                              high = np.array([0, self.window_size[1]]),
                              shape = (2,),
-                             window_size = self.window_size),
+                             window_size = self.window_size,
+                             mode = mode_mole),
                 "gaze": Gaze(low = np.array([0, self.window_size[0]]),
                              high = np.array([0, self.window_size[1]]),
                              shape = (2,),
