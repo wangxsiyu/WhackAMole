@@ -260,9 +260,9 @@ class WhackAMole(gym.Env):
 
         self.frame_count += 1
         if self.frame_count <= self.total_num_of_frames:
-            done = True
-        else:
             done = False
+        else:
+            done = True
 
         # add a frame to the render collection
         self.renderer.render_step()
