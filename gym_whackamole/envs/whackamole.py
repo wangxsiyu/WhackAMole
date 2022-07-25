@@ -154,9 +154,15 @@ class Gaze(spaces.Box):
     def move_gaze(self):
         phi = self.phi + self._phi_velosity
         x, y = self._gaze_location
-        x += np.cos(phi) * self._gaze_velosity
-        y += np.sin(phi) * self._gaze_velosity
-        reward = self.set_pos(x, y)
+        dx = np.cos(phi) * self._gaze_velosity
+        dy = np.sin(phi) * self._gaze_velosity
+        if self.is_valid_xy(x+dx,y+dy):
+            x += dx
+            y += dy
+            reward = 0
+        else: 
+            reward = self.punish_outofbox
+        self.set_pos(x, y)
         return reward
 
     def calculate_phi(self):
@@ -182,14 +188,8 @@ class Gaze(spaces.Box):
     def set_pos(self, x, y):
         x = float(x)
         y = float(y)
-        if self.is_valid_xy(x,y):
-            self._gaze_location = np.array([x,y])
-            self.calculate_phi()
-            reward = 0
-        else: 
-            reward = self.punish_outofbox
-            self.reset()
-        return reward
+        self._gaze_location = np.array([x,y])
+        self.calculate_phi()
 
     def reset(self):
         tx, ty = self.sample_pos()
