@@ -334,7 +334,7 @@ class WhackAMole(gym.Env):
             width_gaze = 0
             col_gaze = (255, 0, 0)
         elif now_mole["ishit"] == 1:
-            width_gaze = 3
+            width_gaze = 0
             col_gaze = (0, 255, 0)
         else:
             width_gaze = 1
