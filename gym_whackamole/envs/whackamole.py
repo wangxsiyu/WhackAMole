@@ -11,7 +11,7 @@ class Mole(spaces.Box):
         self.window_size = window_size
         self.is_visible = 0
         self.p_popping = 0.2
-        self.max_life = 5
+        self.max_life = 20
         self.radius = 10
         self.reward_hit = 100
         self.reward_miss = -10
@@ -187,7 +187,7 @@ class Gaze(spaces.Box):
                 "v_step": self._gaze_velosity, "v_phi": self._phi_velosity}
 
 class WhackAMole(gym.Env):
-    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 5}
+    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
     def __init__(self, render_mode = None):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
