@@ -25,7 +25,7 @@ class Mole(spaces.Box):
         r_gaze = gaze["radius"]
         dis = np.sqrt(np.sum((xy_gaze - xy_mole) ** 2))
         if dis < np.abs(r_gaze + r_mole): # as long as it touches
-            print("hit")
+            # print("hit")
             return True
         else:
             return False
@@ -197,12 +197,12 @@ class Gaze(spaces.Box):
                 "v_step": self._gaze_velosity, "v_phi": self._phi_velosity}
 
 class WhackAMole(gym.Env):
-    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 5}
+    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
     def __init__(self, render_mode = None, mode_mole = None):
         print(f'render mode: {render_mode}')
         self.render_mode = render_mode
         self.window_size = (512, 512) # PyGame window size
-        self.total_num_of_frames = 100
+        self.total_num_of_frames = 500
         # self.action_space = spaces.Dict(
         #     {
         #         "gaze_dir": spaces.Discrete(4),
