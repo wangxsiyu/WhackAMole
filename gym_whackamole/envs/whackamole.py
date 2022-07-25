@@ -21,8 +21,8 @@ class Mole(spaces.Box):
     def collide(self, mole, gaze):
         xy_mole = mole["xy"]
         r_mole = mole["radius"]
-        xy_gaze = mole["xy"]
-        r_gaze = mole["radius"]
+        xy_gaze = gaze["xy"]
+        r_gaze = gaze["radius"]
         dis = np.sqrt(np.sum((xy_gaze - xy_mole) ** 2))
         if dis < np.abs(r_gaze - r_mole):
             return True
