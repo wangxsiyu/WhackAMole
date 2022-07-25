@@ -258,8 +258,8 @@ class WhackAMole(gym.Env):
         r2 = self.my_observation_space["mole"].step(self.my_observation_space["gaze"].obs(), action["hit"])
         self.reward = self.reward + r1 + r2
 
-        self.frame_count -= 1
-        if self.frame_count == 0:
+        self.frame_count += 1
+        if self.frame_count <= self.total_num_of_frames:
             done = True
         else:
             done = False
