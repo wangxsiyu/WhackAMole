@@ -10,7 +10,7 @@ class Mole(spaces.Box):
         super().__init__(low = low, high = high, shape = shape)
         self.window_size = window_size
         self.is_visible = 0
-        self.p_popping = 0.2
+        self.p_popping = 0.3
         self.max_life = 20
         self.radius = 10
         self.reward_hit = 100
