@@ -6,9 +6,9 @@ from gym.utils.renderer import Renderer
 import pygame
 
 class Mole(spaces.Box):
-    def __init__(self, low, high, shape, window_size, mode = None):
+    def __init__(self, low, high, shape, window_size, mode = None, param_mole = None):
         super().__init__(low = low, high = high, shape = shape)
-        self.window_size = window_size
+        self.window_size = window_size            
         self.is_visible = 0
         self.p_popping = 0.3
         self.max_life = 20
@@ -16,6 +16,8 @@ class Mole(spaces.Box):
         self.reward_hit = 100
         self.reward_miss = -10
         self.mode_mole = mode
+        if param_mole is not None:
+            
         self.reset()
 
     def collide(self, mole, gaze):
