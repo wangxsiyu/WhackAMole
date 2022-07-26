@@ -11,7 +11,7 @@ def visualize_env(tenv, model = None):
         if model is None:
             action = np.random.random_integers(0, 7)
         else:
-            action, _state = model.predict(observation, deterministic=True)
+            action, _state = model.predict(observation, deterministic=False)
         observation, reward, done, info = tenv.step(action)
         total_reward += reward
         if done:
