@@ -16,8 +16,8 @@ class Mole(spaces.Box):
         self.reward_hit = 100
         self.reward_miss = -10
         self.mode_mole = mode
-        if param_mole is not None:
-            
+        # if param_mole is not None:
+
         self.reset()
 
     def collide(self, mole, gaze):
