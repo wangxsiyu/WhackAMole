@@ -27,7 +27,6 @@ class Gaze(spaces.Box):
             params['punish_ac_step_at_MAX'] = -1
             params['punish_ac_phi_at_MAX'] = -1
             params['punish_outofbox'] = 0
-            params['is_fixed_location'] = 0
             params['is_boundary_flip'] = 1
         self.params = params
 
@@ -123,10 +122,7 @@ class Gaze(spaces.Box):
             return False
 
     def sample_pos(self):
-        if self.params['is_fixed_location'] == 0:
-            t = np.random.random(size = 2) * self.window_size
-        else:
-            t = np.array([0.5, 0.5]) * self.window_size
+        t = np.random.random(size = 2) * self.window_size
         return t[0], t[1]
 
     def set_pos(self, x, y):

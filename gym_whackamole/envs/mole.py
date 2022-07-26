@@ -48,7 +48,10 @@ class Mole(spaces.Box):
         return {"xy": self._mole_location, "radius": self.params['radius'], "isvisible": is_visible, "ishit": self.am_I_hit}
     
     def sample_pos(self):
-        t = np.random.random(size = 2) * self.window_size
+        if self.params['is_fixed_location'] == 0:
+            t = np.random.random(size = 2) * self.window_size
+        else:
+            t = np.array([0.5, 0.5]) * self.window_size
         return t[0], t[1]
 
     def pop(self):
@@ -76,6 +79,7 @@ class Mole(spaces.Box):
             params['radius'] = 10
             params['reward_hit'] = 100
             params['reward_miss'] = -10
+            params['is_fixed_location'] = 0
         self.params = params
 
     def get_task_parameters(self):
