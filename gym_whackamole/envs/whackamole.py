@@ -116,7 +116,7 @@ class Gaze(spaces.Box):
             reward = self.cost_action_step
 
         if action_step == 1: # accelarate
-            if self._gaze_velosity >= self._gaze_velosity_MAX:
+            if self._gaze_velosity > self._gaze_velosity_MAX:
                 reward += self.punish_ac_velosity_at_MAX
             else:
                 if self._gaze_velosity == 0:
@@ -126,7 +126,7 @@ class Gaze(spaces.Box):
                     if self._gaze_velosity > self._gaze_velosity_MAX:
                         self._gaze_velosity = self._gaze_velosity_MAX
         elif action_step == 2: # decelarate
-            if self._gaze_velosity < self._gaze_velosity_initial:
+            if self._gaze_velosity == 0: # < self._gaze_velosity_initial:
                 reward += self.punish_de_velosity_at_0
             else:
                 self._gaze_velosity = self._gaze_velosity / self.alpha_gaze
@@ -236,6 +236,7 @@ class WhackAMole(gym.Env):
         # )
         self.action_space = spaces.Discrete(7)
         vMAX = 99999.0
+        # x,y, radius,is_visible, is_hit (mole), x, y, radius, v_step, v_dir
         low = np.array([0,0,0,0,0,0,0,0,-vMAX,-vMAX]).astype(np.float32)
         high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
             self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX]).astype(np.float32)
