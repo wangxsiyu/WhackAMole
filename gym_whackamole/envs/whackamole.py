@@ -8,8 +8,7 @@ from gym_whackamole.envs.gaze import Gaze
 import pygame
 
 class WhackAMole(gym.Env):
-    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20, 
-        'version': {'rotation','full'}}
+    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
     params = dict()
     def __init__(self, render_mode = None, window_size = (512, 512), render_fps = 20, n_frame_per_episode = 500, version = "full"):
         print(f'render mode: {render_mode}')
@@ -25,10 +24,7 @@ class WhackAMole(gym.Env):
         #     }
         # )
         self._version_rotation_ismatch = None
-        if version == "full":
-            self.action_space = spaces.Discrete(7)
-        elif version == "rotation":
-            self.action_space = spaces.Discrete(4)
+
         self._value_dist = 1
         vMAX = 999.0
         # x,y, radius,is_visible, is_hit (mole), x, y, phi, radius, v_step, v_dir (gaze)
@@ -51,6 +47,8 @@ class WhackAMole(gym.Env):
             }
         )
 
+        num_actions = self.num_actions()
+        self.action_space = spaces.Discrete(num_actions)
         self.get_task_parameters()
         self.setup_rendermode(render_mode)
 
@@ -72,6 +70,8 @@ class WhackAMole(gym.Env):
         self.params = params
         self.my_observation_space['mole'].set_task_parameters(params['mole'])
         self.my_observation_space['gaze'].set_task_parameters(params['gaze'])
+        num_actions = self.num_actions()
+        self.action_space = spaces.Discrete(num_actions)
 
     def get_task_parameters(self):
         params = dict()
@@ -158,10 +158,11 @@ class WhackAMole(gym.Env):
 
         self.reward = self.reward + reward
         self.frame_count += 1
-        if self.frame_count <= self.total_num_of_frames:
-            done = False
-        else:
+        # ishit = self.my_observation_space['mole'].obs()['ishit']
+        if self.frame_count >= self.total_num_of_frames:# or ishit:
             done = True
+        else:
+            done = False
 
         # add a frame to the render collection
         self.renderer.render_step()
@@ -169,6 +170,16 @@ class WhackAMole(gym.Env):
         obs = self._get_obs()
         info = self._get_info()
         return obs, reward, done, info
+
+    def num_actions(self):
+        mole = self.my_observation_space['mole']
+        gaze = self.my_observation_space['gaze']
+        num = 1 + 3 # nothing + rotations
+        if mole.params['version_needhit'] != 0:
+            num += 1 # hit
+        if gaze.params['version_canmove'] != 0:
+            num += 2
+        return num
 
     def action_transform(self, action):
         a = spaces.Dict(
@@ -178,24 +189,33 @@ class WhackAMole(gym.Env):
                 "hit": spaces.Discrete(2)
             }
         )
-        # params['version_needhit']
-        if self.metadata['version'] == "full":
+        mole = self.my_observation_space['mole']
+        gaze = self.my_observation_space['gaze']
+        if mole.params['version_needhit'] == 0:
+            a["hit"] = 0
+        else:
             if action == 1: # hit
                 a["hit"] = 1
+                action = 0
+            elif action == 0:
+                a["hit"] = 0
             else:
                 a["hit"] = 0
-            if action >= 2 and action <= 3: # speed
-                a["gaze_step"] = action - 1
-            else:
-                a["gaze_step"] = 0
-            if action >= 4 and action <= 6: # rotation
-                a["gaze_dir"] = action - 3
-            else:
-                a["gaze_dir"] = 0
-        elif self.metadata['version'] == "rotation":
-            a["hit"] = 0
+                action = action - 1
+
+        if gaze.params['version_canmove'] == 0:
             a["gaze_step"] = 0
-            a["gaze_dir"] = action
+        else:
+            if action >= 1 and action <= 2:
+                a['gaze_step'] = action
+                action = 0
+            elif action == 0:
+                a['gaze_step'] = 0
+            else:
+                a['gaze_step'] = 0
+                action -= 2
+        
+        a["gaze_dir"] = action
         return(a)
 
     def render(self):

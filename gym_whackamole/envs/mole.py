@@ -50,10 +50,11 @@ class Mole(spaces.Box):
         return {"xy": self._mole_location, "radius": self.params['radius'], "isvisible": is_visible, "ishit": self.am_I_hit}
     
     def sample_pos(self):
-        if self.params['version_fixedlocation'] == 0:
+        if self.params['version_resample']['cond'] == "uniform":
             t = np.random.random(size = 2) * self.window_size
-        else:
-            t = np.array([0.5, 0.5]) * self.window_size
+        elif self.params['version_resample']['cond'] == "fixed":
+            tpos = self.params['version_resample']['value']
+            t = np.array(tpos) * self.window_size
         return t[0], t[1]
 
     def pop(self):
@@ -81,7 +82,10 @@ class Mole(spaces.Box):
             params['radius'] = 10
             params['reward_hit'] = 100
             params['reward_miss'] = -10
-            params['version_fixedlocation'] = 1
+            params['version_resample'] = dict({
+                "cond": "uniform",
+                "value": None
+            })
             params['version_needhit'] = 0
         self.params = params
 

@@ -30,9 +30,10 @@ class Gaze(spaces.Box):
             params['punish_ac_phi_at_MAX'] = -1
             params['punish_outofbox'] = 0
             params['is_boundary_flip'] = 1
+            params['version_canmove'] = 0
             params['version_resample'] = dict({
-                "cond": "fixed",
-                "value": (30,30)
+                "cond": "uniform",
+                "value": None
             })
         self.params = params
 
@@ -72,6 +73,9 @@ class Gaze(spaces.Box):
         return reward
 
     def accelerate_step(self, action_step):
+        if self.params['version_canmove'] == 0: # don't allow move
+            return 0
+
         if action_step == 0: # no action taken
             reward = 0
         else:
@@ -139,7 +143,7 @@ class Gaze(spaces.Box):
         if value['cond'] == "uniform":
             t = np.random.random(size = 2) * self.window_size
         elif value['cond'] == "fixed":
-            t = np.array(value['value'])
+            t = np.array(value['value']) * self.window_size
         return t[0], t[1]
 
     def set_pos(self, x, y):
