@@ -158,8 +158,8 @@ class WhackAMole(gym.Env):
 
         self.reward = self.reward + reward
         self.frame_count += 1
-        # ishit = self.my_observation_space['mole'].obs()['ishit']
-        if self.frame_count >= self.total_num_of_frames:# or ishit:
+        ishit = self.my_observation_space['mole'].obs()['ishit']
+        if self.frame_count >= self.total_num_of_frames or ishit == 1:
             done = True
         else:
             done = False
