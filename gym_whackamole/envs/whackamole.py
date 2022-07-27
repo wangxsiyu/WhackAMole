@@ -1,17 +1,19 @@
 import gym
 from gym import spaces
 import numpy as np
+import math
 from gym.utils.renderer import Renderer
 from gym_whackamole.envs.mole import Mole
 from gym_whackamole.envs.gaze import Gaze
 import pygame
 
 class WhackAMole(gym.Env):
-    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20}
+    metadata = {'render_modes': ["human", "rgb_array", "single_rgb_array"], "render_fps": 20, 
+        'version': {'rotation','full'}}
     params = dict()
-    def __init__(self, render_mode = None, window_size = (512, 512), render_fps = 20, n_frame_per_episode = 500):
+    def __init__(self, render_mode = None, window_size = (512, 512), render_fps = 20, n_frame_per_episode = 500, version = "full"):
         print(f'render mode: {render_mode}')
-        self.render_mode = render_mode
+        self.metadata['version'] = version
         self.window_size = window_size # PyGame window size
         self.metadata['render_fps'] = render_fps
         self.total_num_of_frames = n_frame_per_episode
@@ -22,7 +24,12 @@ class WhackAMole(gym.Env):
         #         "hit": spaces.Discrete(2)
         #     }
         # )
-        self.action_space = spaces.Discrete(7)
+        self._version_rotation_ismatch = None
+        if version == "full":
+            self.action_space = spaces.Discrete(7)
+        elif version == "rotation":
+            self.action_space = spaces.Discrete(4)
+        self._value_dist = 1
         vMAX = 999.0
         # x,y, radius,is_visible, is_hit (mole), x, y, phi, radius, v_step, v_dir (gaze)
         low = np.array([0,0,0,0,0,
@@ -43,6 +50,12 @@ class WhackAMole(gym.Env):
                              window_size = self.window_size)
             }
         )
+
+        self.get_task_parameters()
+        self.setup_rendermode(render_mode)
+
+    def setup_rendermode(self, render_mode = None):
+        self.render_mode = render_mode
         if self.render_mode == "human":
             import pygame  # import here to avoid pygame dependency with no render
             pygame.init()
@@ -54,7 +67,6 @@ class WhackAMole(gym.Env):
             self.window = None
             self.clock = None
         self.renderer = Renderer(self.render_mode, self._render_frame)
-        self.get_task_parameters()
 
     def set_params(self, params):
         self.params = params
@@ -65,6 +77,8 @@ class WhackAMole(gym.Env):
         params = dict()
         params["mole"] = self.my_observation_space['mole'].get_task_parameters()
         params["gaze"] = self.my_observation_space['gaze'].get_task_parameters()
+        params['reward_rotation'] = 20
+        params['reward_distance'] = 10
         self.params = params
 
     def _render_frame(self, mode: str):
@@ -73,11 +87,19 @@ class WhackAMole(gym.Env):
         import pygame # avoid global pygame dependency. This method is not called with no-render.
     
         canvas = pygame.Surface(self.window_size)
-        canvas.fill((255, 255, 255))
+        colval = (1-self._value_dist) * 255
+        canvas.fill((colval, colval, colval))
        
         self.my_observation_space['mole']._render_frame(canvas)
         ishit = self.my_observation_space['mole'].obs()['ishit']
-        self.my_observation_space['gaze']._render_frame(canvas, ishit)
+
+        if self._version_rotation_ismatch:
+            width_line = 5
+        else:
+            width_line = 1
+
+        self.my_observation_space['gaze']._render_frame(canvas, ishit, width_line)
+
         if mode == "human":
             assert self.window is not None
             # The following line copies our drawings from `canvas` to the visible window
@@ -93,13 +115,48 @@ class WhackAMole(gym.Env):
                 np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
             )
 
+    def calculate_phi(self, x, y):
+            if x == 0:
+                phi = math.pi/2 if y > 0 else math.pi/2 + math.pi
+            else:
+                phi = np.arctan(y/x)
+                if x < 0:
+                    phi += math.pi
+            while phi < 0:
+                phi += 2 * math.pi
+            while phi >= math.pi * 2:
+                phi -= 2 * math.pi
+            return phi
+
+    def is_match_phi(self, xy1, phi, xy2):
+        phi2 = self.calculate_phi(xy2[0]-xy1[0], xy2[1]-xy1[1])
+        if np.abs(phi - phi2) < math.pi/18:
+            return True
+        else:
+            return False
+
+    def calculate_dist(self, x, y):
+        return np.sqrt(np.sum((x-y) ** 2))
+
     def step(self, action):
         action = self.action_transform(action)
         r1 = self.my_observation_space["gaze"].step(action["gaze_step"],action["gaze_dir"])
         r2 = self.my_observation_space["mole"].step(self.my_observation_space["gaze"].obs(), action["hit"])
         reward = r1 + r2
-        self.reward = self.reward + reward
 
+        self._version_rotation_ismatch = self.is_match_phi(self.my_observation_space["gaze"].obs()['xy'],
+            self.my_observation_space["gaze"].obs()['phi'],
+            self.my_observation_space["mole"].obs()['xy'])
+        if self._version_rotation_ismatch:
+            reward += self.params['reward_rotation']
+        
+        tdist = self.calculate_dist(self.my_observation_space["gaze"].obs()['xy'], 
+            self.my_observation_space["mole"].obs()['xy'])
+        tdistMAX = self.calculate_dist(np.array([0,0]), np.array(self.window_size))
+        self._value_dist = tdist/tdistMAX
+        reward += self.params['reward_distance'] * (1-self._value_dist)
+
+        self.reward = self.reward + reward
         self.frame_count += 1
         if self.frame_count <= self.total_num_of_frames:
             done = False
@@ -121,18 +178,24 @@ class WhackAMole(gym.Env):
                 "hit": spaces.Discrete(2)
             }
         )
-        if action == 1:
-            a["hit"] = 1
-        else:
+        # params['version_needhit']
+        if self.metadata['version'] == "full":
+            if action == 1: # hit
+                a["hit"] = 1
+            else:
+                a["hit"] = 0
+            if action >= 2 and action <= 3: # speed
+                a["gaze_step"] = action - 1
+            else:
+                a["gaze_step"] = 0
+            if action >= 4 and action <= 6: # rotation
+                a["gaze_dir"] = action - 3
+            else:
+                a["gaze_dir"] = 0
+        elif self.metadata['version'] == "rotation":
             a["hit"] = 0
-        if action >= 2 and action <= 3:
-            a["gaze_step"] = action - 1
-        else:
             a["gaze_step"] = 0
-        if action >= 4 and action <= 6:
-            a["gaze_dir"] = action - 3
-        else:
-            a["gaze_dir"] = 0
+            a["gaze_dir"] = action
         return(a)
 
     def render(self):

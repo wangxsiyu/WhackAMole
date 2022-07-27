@@ -21,13 +21,15 @@ class Mole(spaces.Box):
                 self.pop()
 
         self.am_I_hit = 0 # reset am_I_hit
-        if action_hit == 1:
+        if action_hit == 1 or self.params['version_needhit'] == 0:
             if self._mole_life > 0 and self.collide(self.obs(),gaze):
                 self.am_I_hit = 1
                 reward = self.params['reward_hit']
-            else:
+            elif action_hit == 1: # you catually hit and missed/no mole available
                 self.am_I_hit = -1
                 reward = self.params['reward_miss']
+            else:
+                reward = 0
         else:
             reward = 0
         return reward
@@ -48,7 +50,7 @@ class Mole(spaces.Box):
         return {"xy": self._mole_location, "radius": self.params['radius'], "isvisible": is_visible, "ishit": self.am_I_hit}
     
     def sample_pos(self):
-        if self.params['is_fixed_location'] == 0:
+        if self.params['version_fixedlocation'] == 0:
             t = np.random.random(size = 2) * self.window_size
         else:
             t = np.array([0.5, 0.5]) * self.window_size
@@ -79,7 +81,8 @@ class Mole(spaces.Box):
             params['radius'] = 10
             params['reward_hit'] = 100
             params['reward_miss'] = -10
-            params['is_fixed_location'] = 0
+            params['version_fixedlocation'] = 1
+            params['version_needhit'] = 0
         self.params = params
 
     def get_task_parameters(self):
