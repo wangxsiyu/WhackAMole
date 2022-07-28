@@ -151,7 +151,7 @@ class WhackAMole2(gym.Env):
             self.my_observation_space["mole"].obs()['xy'])
         if self._version_rotation_ismatch:
             reward += self.params['reward_rotation']
-            done = True
+            done = False
         else:
             done = False
         
