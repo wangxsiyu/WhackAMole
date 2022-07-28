@@ -33,7 +33,7 @@ class WhackAMole_singleintegrator(gym.Env):
         # high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
         #     self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX, vMAX]).astype(np.float32)
         # self.observation_space = spaces.Box(low, high)
-        self.observation_space(np.array(-vMAX), np.array(vMAX))
+        self.observation_space = spaces.Box(np.array(-vMAX), np.array(vMAX))
 
         self.my_observation_space = spaces.Dict(
             {
