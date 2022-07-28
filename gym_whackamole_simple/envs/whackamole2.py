@@ -49,7 +49,7 @@ class WhackAMole2(gym.Env):
             }
         )
 
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Discrete(2)
         self.get_task_parameters()
         self.setup_rendermode(render_mode)
 

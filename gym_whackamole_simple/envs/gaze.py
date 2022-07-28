@@ -41,10 +41,10 @@ class Gaze(spaces.Box):
         reward = 0
         if action_dir == 1:
             self._vphi = self.params['_vphi_initial']
-        elif action_dir == 2:
+        elif action_dir == 0:
             self._vphi = -self.params['_vphi_initial']
-        else:
-            self._vphi = 0
+        # else:
+        #     self._vphi = 0
         # if action_dir == 0: # no action taken
         #     reward = 0
         # else:
