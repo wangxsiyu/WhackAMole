@@ -43,6 +43,8 @@ class Gaze(spaces.Box):
             self._vphi = self.params['_vphi_initial']
         elif action_dir == 2:
             self._vphi = -self.params['_vphi_initial']
+        else:
+            self._vphi = 0
         # if action_dir == 0: # no action taken
         #     reward = 0
         # else:
@@ -119,22 +121,32 @@ class Gaze(spaces.Box):
             x += 2 * math.pi
         return x
 
+    
+    def regularize_phi2(self, x):
+        if x >= 2 * math.pi: # keep phi between 0 to 2 pi
+            x = 2 * math.pi
+        if x < 0:
+            x = 0
+        return x
+
+
     def move_gaze(self):
-        self.phi = self.regularize_phi(self.phi + self._vphi)
-        x, y = self._gaze_location
-        dx = np.cos(self.phi) * self._vstep
-        dy = np.sin(self.phi) * self._vstep
-        if self.is_valid_xy(x+dx,y+dy):
-            x += dx
-            y += dy
-            reward = 0
-        else: 
-            if self.params['is_boundary_flip'] == 1: # flip direction
-                self.phi = self.phi + math.pi
-                self._vphi = 0
-                self._vstep = 0
-            reward = self.params['punish_outofbox']
-        self.set_pos(x, y)
+        self.phi = self.regularize_phi2(self.phi + self._vphi)
+        reward = 0
+        # x, y = self._gaze_location
+        # dx = np.cos(self.phi) * self._vstep
+        # dy = np.sin(self.phi) * self._vstep
+        # if self.is_valid_xy(x+dx,y+dy):
+        #     x += dx
+        #     y += dy
+        #     reward = 0
+        # else: 
+        #     if self.params['is_boundary_flip'] == 1: # flip direction
+        #         self.phi = self.phi + math.pi
+        #         self._vphi = 0
+        #         self._vstep = 0
+        #     reward = self.params['punish_outofbox']
+        # self.set_pos(x, y)
         return reward
 
     def is_valid_xy(self, x, y):

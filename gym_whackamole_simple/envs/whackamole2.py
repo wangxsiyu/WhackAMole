@@ -175,51 +175,52 @@ class WhackAMole2(gym.Env):
         return obs, reward, done, info
 
     def num_actions(self):
-        mole = self.my_observation_space['mole']
-        gaze = self.my_observation_space['gaze']
-        num = 1 + 3 # nothing + rotations
-        if mole.params['version_needhit'] != 0:
-            num += 1 # hit
-        if gaze.params['version_canmove'] != 0:
-            num += 2
+        num = 3
+        # mole = self.my_observation_space['mole']
+        # gaze = self.my_observation_space['gaze']
+        # num = 1 + 3 # nothing + rotations
+        # if mole.params['version_needhit'] != 0:
+        #     num += 1 # hit
+        # if gaze.params['version_canmove'] != 0:
+        #     num += 2
         return num
 
-    def action_transform(self, action):
-        a = spaces.Dict(
-            {
-                "gaze_dir": spaces.Discrete(4),
-                "gaze_step": spaces.Discrete(3),
-                "hit": spaces.Discrete(2)
-            }
-        )
-        mole = self.my_observation_space['mole']
-        gaze = self.my_observation_space['gaze']
-        if mole.params['version_needhit'] == 0:
-            a["hit"] = 0
-        else:
-            if action == 1: # hit
-                a["hit"] = 1
-                action = 0
-            elif action == 0:
-                a["hit"] = 0
-            else:
-                a["hit"] = 0
-                action = action - 1
+    # def action_transform(self, action):
+    #     a = spaces.Dict(
+    #         {
+    #             "gaze_dir": spaces.Discrete(4),
+    #             "gaze_step": spaces.Discrete(3),
+    #             "hit": spaces.Discrete(2)
+    #         }
+    #     )
+    #     mole = self.my_observation_space['mole']
+    #     gaze = self.my_observation_space['gaze']
+    #     if mole.params['version_needhit'] == 0:
+    #         a["hit"] = 0
+    #     else:
+    #         if action == 1: # hit
+    #             a["hit"] = 1
+    #             action = 0
+    #         elif action == 0:
+    #             a["hit"] = 0
+    #         else:
+    #             a["hit"] = 0
+    #             action = action - 1
 
-        if gaze.params['version_canmove'] == 0:
-            a["gaze_step"] = 0
-        else:
-            if action >= 1 and action <= 2:
-                a['gaze_step'] = action
-                action = 0
-            elif action == 0:
-                a['gaze_step'] = 0
-            else:
-                a['gaze_step'] = 0
-                action -= 2
+    #     if gaze.params['version_canmove'] == 0:
+    #         a["gaze_step"] = 0
+    #     else:
+    #         if action >= 1 and action <= 2:
+    #             a['gaze_step'] = action
+    #             action = 0
+    #         elif action == 0:
+    #             a['gaze_step'] = 0
+    #         else:
+    #             a['gaze_step'] = 0
+    #             action -= 2
         
-        a["gaze_dir"] = action
-        return(a)
+    #     a["gaze_dir"] = action
+    #     return(a)
 
     def render(self):
         # Just return the list of render frames collected by the Renderer.
