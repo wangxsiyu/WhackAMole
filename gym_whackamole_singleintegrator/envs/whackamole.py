@@ -28,11 +28,12 @@ class WhackAMole_singleintegrator(gym.Env):
         self._value_dist = 1
         vMAX = 999.0
         # x,y, radius,is_visible, is_hit (mole), x, y, phi, radius, v_step, v_dir (gaze)
-        low = np.array([0,0,0,0,0,
-            0,0,-vMAX, 0,0,-vMAX]).astype(np.float32)
-        high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
-            self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX, vMAX]).astype(np.float32)
-        self.observation_space = spaces.Box(low, high)
+        # low = np.array([0,0,0,0,0,
+        #     0,0,-vMAX, 0,0,-vMAX]).astype(np.float32)
+        # high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
+        #     self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX, vMAX]).astype(np.float32)
+        # self.observation_space = spaces.Box(low, high)
+        self.observation_space(np.array(-vMAX), np.array(vMAX))
 
         self.my_observation_space = spaces.Dict(
             {
