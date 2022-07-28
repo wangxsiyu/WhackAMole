@@ -30,10 +30,11 @@ class WhackAMole_singleintegrator(gym.Env):
         # x,y, radius,is_visible, is_hit (mole), x, y, phi, radius, v_step, v_dir (gaze)
         # low = np.array([0,0,0,0,0,
         #     0,0,-vMAX, 0,0,-vMAX]).astype(np.float32)
+        low = np.array([-vMAX, 0,0]).astype(np.float32)
+        high = np.array([-vMAX,self.window_size[0],self.window_size[1]]).astype(np.float32)
         # high = np.array([self.window_size[0],self.window_size[1],vMAX,1,1,
         #     self.window_size[0],self.window_size[1], vMAX, vMAX, vMAX, vMAX]).astype(np.float32)
-        # self.observation_space = spaces.Box(low, high)
-        self.observation_space = spaces.Box(np.array(-vMAX), np.array(vMAX))
+        self.observation_space = spaces.Box(low, high)
 
         self.my_observation_space = spaces.Dict(
             {
@@ -241,7 +242,7 @@ class WhackAMole_singleintegrator(gym.Env):
         mole = obs["mole"]
         gaze = obs["gaze"]
         # obs = [mole["xy"], mole["radius"], mole["isvisible"],mole["ishit"], gaze["xy"], gaze['phi'], gaze["radius"], gaze["v_step"], gaze["v_phi"]]
-        obs = [gaze["phi"]]
+        obs = [gaze["phi"], mole["xy"]]
         return np.hstack(obs)
 
     def _get_obs(self):
