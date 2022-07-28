@@ -1,4 +1,6 @@
 from gym.envs.registration import register
+import gym
+import gym.envs.registry
 
 env_name = 'gym_whackamole_simple/WhackAMole-v0'
 if env_name in gym.envs.registry.env_specs:
