@@ -241,7 +241,8 @@ class WhackAMole2(gym.Env):
     def obs2vec(self, obs):
         mole = obs["mole"]
         gaze = obs["gaze"]
-        obs = [mole["xy"], mole["radius"], mole["isvisible"],mole["ishit"], gaze["xy"], gaze['phi'], gaze["radius"], gaze["v_step"], gaze["v_phi"]]
+        # obs = [mole["xy"], mole["radius"], mole["isvisible"],mole["ishit"], gaze["xy"], gaze['phi'], gaze["radius"], gaze["v_step"], gaze["v_phi"]]
+        obs = [gaze['phi'], gaze['v_phi']]
         return np.hstack(obs)
 
     def _get_obs(self):
