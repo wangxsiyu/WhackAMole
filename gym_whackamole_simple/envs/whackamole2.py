@@ -151,7 +151,7 @@ class WhackAMole2(gym.Env):
             self.my_observation_space["mole"].obs()['xy'])
         if self._version_rotation_ismatch:
             reward += self.params['reward_rotation']
-            done = False
+            done = True
         else:
             done = False
         
@@ -161,8 +161,8 @@ class WhackAMole2(gym.Env):
         # self._value_dist = tdist/tdistMAX
         # reward += self.params['reward_distance'] * (1-self._value_dist)
 
-        self.reward = self.reward + reward
         self.frame_count += 1
+        reward -= 1
         # ishit = self.my_observation_space['mole'].obs()['ishit']
         if self.frame_count >= self.total_num_of_frames:# or ishit == 1:
             done = True
@@ -172,6 +172,7 @@ class WhackAMole2(gym.Env):
 
         obs = self._get_obs()
         info = self._get_info()
+        self.reward = self.reward + reward
         return obs, reward, done, info
 
     def num_actions(self):
