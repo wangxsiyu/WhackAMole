@@ -9,6 +9,7 @@ import numpy as np
 # import torch.nn.functional as F
 from collections import namedtuple, deque
 import random
+from torch.utils import tensorboard as tb
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -29,10 +30,8 @@ class ReplayMemory(object):
 
 
 class DQN_network(nn.Module):
-    def __init__(self, n_obs, n_action):
+    def __init__(self, n_obs, n_action, h1=8, h2=8):
         super(DQN_network, self).__init__()
-        h1 = 8
-        h2 = 8
         self.dqn = nn.Sequential(
             nn.Linear(n_obs, h1),
             nn.ReLU(),
@@ -45,11 +44,11 @@ class DQN_network(nn.Module):
         return self.dqn(x)
 
 class DQN_agent():
-    def __init__(self, env, eps_start  = 1):
+    def __init__(self, env, logger:tb.SummaryWriter, eps_start  = 1, h1=8, h2=8):
         self.env = env
-        in_num = 1
-        self.dqn_policy = DQN_network(in_num, env.num_actions())
-        self.dqn_target = DQN_network(in_num, env.num_actions())
+        in_num = 3
+        self.dqn_policy = DQN_network(in_num, env.num_actions(), h1, h2)
+        self.dqn_target = DQN_network(in_num, env.num_actions(), h1, h2)
         self.dqn_target.load_state_dict(self.dqn_policy.state_dict())
         self.dqn_target.eval()
         self.memory = ReplayMemory(10000)
@@ -62,6 +61,7 @@ class DQN_agent():
         self.optimizer = optim.Adam(self.dqn_policy.parameters())
         self.steps_done = 0
         self.device = "cpu" #("cuda" if torch.cuda.is_available() else "cpu")
+        self.logger = logger
 
     def predict(self, obs, deterministic = False):
         obs = torch.tensor(obs, dtype = torch.float, device = self.device)
@@ -80,23 +80,29 @@ class DQN_agent():
             if i_episode % n_log == 0:
                 print(f"@episode = {i_episode}")
             obs = env.reset()
+            episode_sum_avg = 0 
+
             for t in count():
                 # Select and perform an action
                 action = self.predict(obs)
                 obs_next, reward, done, _ = env.step(action.item())
+                episode_sum_avg += reward
                 reward = torch.tensor([reward], device = self.device, dtype = torch.float)
                 # Store the transition in memory
                 self.memory.push(obs, action, obs_next, reward)
                 # Move to the next state
                 obs = obs_next
                 # Perform one step of the optimization (on the policy network)
-                self.step_train()
+                self.step_train(i_episode, done)
                 if done:
+                    # log avg reward
+                    self.logger.add_scalar('average_episode_reward', episode_sum_avg/t, global_step=i_episode)
                     break
             # Update the target network, copying all weights and biases in DQN
             if i_episode % self.target_update == 0:
                 self.dqn_target.load_state_dict(self.dqn_policy.state_dict())
                 self.print_evaluate()
+
         print('Complete')
 
     def print_evaluate(self):
@@ -106,7 +112,7 @@ class DQN_agent():
         # for p in ps:
             # print(p)
 
-    def step_train(self):
+    def step_train(self, i_episode, done):
         if len(self.memory) < self.batch_size:
             return
         transitions = self.memory.sample(self.batch_size)
@@ -134,6 +140,10 @@ class DQN_agent():
         # Compute Huber loss
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        # log the loss at the end of each episode
+        if done:
+            self.logger.add_scalar('l1_loss', loss, global_step=i_episode)
 
         # Optimize the model
         self.optimizer.zero_grad()

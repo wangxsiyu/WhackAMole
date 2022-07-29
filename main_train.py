@@ -3,6 +3,10 @@ from func_visualize import visualize_env
 from gym_whackamole_singleintegrator.envs import WhackAMole_singleintegrator
 import func_visualize
 import torch
+from torch.utils import tensorboard as tb
+
+# initialize tensorboard writer
+logger = tb.SummaryWriter('logs/train', flush_secs=1)
 
 env = WhackAMole_singleintegrator(render_mode=None, version = "full", render_fps = 20)
 params = env.params
@@ -26,10 +30,10 @@ venv.set_params(params)
 # visualize_env(venv)
 
 
-dqn = DQN_agent(env)
+dqn = DQN_agent(env, logger)
 
-dqn = torch.load('dqn_v1_fixedmole')
-# dqn.train(1000, n_log = 100)
+# dqn = torch.load('dqn_v1_fixedmole')
+dqn.train(500, n_log = 100)
 # torch.save(dqn,'dqn_v1_fixedmole')
 visualize_env(venv, dqn, is_record = True)
 
